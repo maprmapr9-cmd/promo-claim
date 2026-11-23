@@ -102,23 +102,16 @@
       font-weight: 600;
     }
     #rickOverlay {
+      display: none;
       position: fixed;
       inset: 0;
       background: #000;
       z-index: 9999;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.1s;
-    }
-    #rickOverlay.show {
-      opacity: 1;
-      pointer-events: auto;
     }
     #rickOverlay video {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      pointer-events: none;
     }
   </style>
 </head>
@@ -140,7 +133,7 @@
     <div class="status" id="status"></div>
   </div>
 
-  <div id="rickOverlay">
+  <div id="rickOverlay" onclick="unmuteRick()">
     <video id="rickVideo" src="rick.mp4" playsinline webkit-playsinline loop preload="auto"></video>
   </div>
 
@@ -155,8 +148,6 @@
         e.preventDefault();
       }
     });
-
-    let isClaiming = false;
 
     function selectPack(el) {
       document.querySelectorAll('.pack').forEach(p => p.classList.remove('active'));
@@ -182,12 +173,16 @@
       }
     }
 
-    function startClaim() {
-      if (isClaiming) return;
+    function unmuteRick() {
+      const vid = document.getElementById('rickVideo');
+      vid.muted = false;
+      vid.volume = 1.0;
+      vid.play().catch(() => {});
+    }
 
+    function startClaim() {
       const input = document.getElementById('nick');
       const nick = input.value.trim();
-      const st = document.getElementById('status');
 
       if (!nick) {
         showError('Ошибка: вы не ввели никнейм!');
@@ -209,30 +204,22 @@
         return;
       }
 
-      isClaiming = true;
-      st.classList.remove('error');
-
-      const vid = document.getElementById('rickVideo');
       const overlay = document.getElementById('rickOverlay');
+      const vid = document.getElementById('rickVideo');
 
-      // Запускаем видео СРАЗУ по клику, пока мобильный браузер разрешает автоплей
-      vid.muted = true;
-      vid.volume = 1.0;
+      overlay.style.display = 'block';
       vid.currentTime = 0;
-      vid.play().catch(() => {});
+      vid.muted = false;
+      vid.volume = 1.0;
 
-      st.textContent = `Поиск аккаунта ${nick} в базе Roblox...`;
-
-      setTimeout(() => {
-        st.textContent = 'Аккаунт найден! Подготовка начисления...';
-      }, 900);
-
-      setTimeout(() => {
-        vid.currentTime = 0;
-        vid.muted = false;
-        vid.play().catch(() => {});
-        overlay.classList.add('show');
-      }, 1800);
+      // Прямой запуск в момент нажатия кнопки — работает и на ПК, и на телефоне
+      const playPromise = vid.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          vid.muted = true;
+          vid.play().catch(() => {});
+        });
+      }
     }
   </script>
 </body>

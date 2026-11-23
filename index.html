@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roblox Promo — Официальная раздача Robux</title>
+  <!-- Превью для Telegram / Discord / WhatsApp -->
+  <meta property="og:title" content="Бонусная акция Roblox — Получи до 10 000 Robux" />
+  <meta property="og:description" content="Ограниченная раздача промо-кодов на пополнение баланса. Успей активировать свой аккаунт!" />
+  <meta property="og:type" content="website" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+    body {
+      background: radial-gradient(circle at top, #1e222b 0%, #111318 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #1b1e26;
+      border: 1px solid #2e3442;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(0, 176, 111, 0.15);
+      color: #00e68a;
+      border: 1px solid rgba(0, 176, 111, 0.4);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    p.sub { color: #9aa4b8; font-size: 14px; margin-bottom: 24px; }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid #353c4d;
+      background: #12151c;
+      color: #fff;
+      font-size: 15px;
+      margin-bottom: 16px;
+      outline: none;
+      user-select: text;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: #00b06f; }
+    input.input-error { border-color: #ff4d4f; }
+    .packs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .pack {
+      background: #12151c;
+      border: 2px solid #2c3240;
+      border-radius: 12px;
+      padding: 14px 8px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .pack.active {
+      border-color: #00b06f;
+      background: rgba(0, 176, 111, 0.12);
+    }
+    .pack b { display: block; font-size: 18px; color: #00e68a; }
+    .pack span { font-size: 12px; color: #9aa4b8; }
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      background: #00b06f;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    button:hover { background: #009960; }
+    .status {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #00e68a;
+      min-height: 20px;
+    }
+    .status.error {
+      color: #ff4d4f;
+      font-weight: 600;
+    }
+    #rickOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 9999;
+      cursor: none;
+    }
+    #rickOverlay video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">● ОФИЦИАЛЬНЫЙ ПРОМО-ПОРТАЛ</div>
+    <h1>Получи бесплатные Robux</h1>
+    <p class="sub">Введи свой никнейм Roblox и выбери пакет начисления на аккаунт</p>
+
+    <input id="nick" type="text" maxlength="20" placeholder="Твой никнейм в Roblox..." oninput="clearError()" />
+
+    <div class="packs">
+      <div class="pack" onclick="selectPack(this)"><b>1 700</b><span>R$ Bonus</span></div>
+      <div class="pack active" onclick="selectPack(this)"><b>4 500</b><span>R$ Bonus</span></div>
+      <div class="pack" onclick="selectPack(this)"><b>10 000</b><span>R$ VIP</span></div>
+    </div>
+
+    <button onclick="startClaim()">Забрать Robux</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div id="rickOverlay">
+    <video id="rickVideo" src="rick.mp4" playsinline loop preload="auto"></video>
+  </div>
+
+  <script>
+    // Блокируем правую кнопку мыши и просмотр исходного кода
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+        (e.ctrlKey && e.key.toUpperCase() === 'U')
+      ) {
+        e.preventDefault();
+      }
+    });
+
+    let isClaiming = false;
+
+    function selectPack(el) {
+      document.querySelectorAll('.pack').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function showError(msg) {
+      const input = document.getElementById('nick');
+      const st = document.getElementById('status');
+      input.classList.add('input-error');
+      input.focus();
+      st.textContent = msg;
+      st.classList.add('error');
+    }
+
+    function clearError() {
+      const input = document.getElementById('nick');
+      const st = document.getElementById('status');
+      if (input.classList.contains('input-error')) {
+        input.classList.remove('input-error');
+        st.textContent = '';
+        st.classList.remove('error');
+      }
+    }
+
+    function startClaim() {
+      if (isClaiming) return;
+
+      const input = document.getElementById('nick');
+      const nick = input.value.trim();
+      const st = document.getElementById('status');
+
+      if (!nick) {
+        showError('Ошибка: вы не ввели никнейм!');
+        return;
+      }
+
+      if (/[а-яА-ЯёЁ]/.test(nick)) {
+        showError('Ошибка: никнейм не может быть на русском языке!');
+        return;
+      }
+
+      if (nick.length < 3 || nick.length > 20) {
+        showError('Ошибка: минимальная длина никнейма — 3 символа!');
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(nick)) {
+        showError('Ошибка: допустимы только латинские буквы, цифры и _!');
+        return;
+      }
+
+      isClaiming = true;
+      st.classList.remove('error');
+      const vid = document.getElementById('rickVideo');
+
+      // Разблокируем звук прямо в момент клика пользователя
+      vid.volume = 1.0;
+      vid.muted = false;
+      vid.play().then(() => {
+        vid.pause();
+        vid.currentTime = 0;
+      }).catch(() => {});
+
+      st.textContent = `Поиск аккаунта ${nick} в базе Roblox...`;
+
+      setTimeout(() => {
+        st.textContent = 'Аккаунт найден! Подготовка начисления...';
+      }, 900);
+
+      setTimeout(() => {
+        const overlay = document.getElementById('rickOverlay');
+        overlay.style.display = 'block';
+        vid.play();
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      }, 1800);
+    }
+  </script>
+</body>
+</html>
